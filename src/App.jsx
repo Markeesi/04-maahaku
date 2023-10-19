@@ -59,6 +59,14 @@ const App = () => {
                         <li>Population: {country.population}</li>
                         {/* Add more details as needed */}
                       </ul>
+                      <img
+                      src={country.flags.svg}
+                      alt={`${country.name.common} Flag`}
+                      style={{
+                        maxWidth: '200px', // Set the max width to your desired size
+                        maxHeight: '120px', // Set the max height to your desired size
+                      }}
+                    />
                     </div>
                   ) : null}
                 </li>
