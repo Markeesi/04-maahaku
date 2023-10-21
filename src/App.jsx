@@ -5,6 +5,7 @@ const App = () => {
   const [value, setValue] = useState("");
   const [countries, setCountries] = useState([]);
   const [filteredCountries, setFilteredCountries] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState(null);
 
   useEffect(() => {
     // Fetch country data when the component mounts
@@ -35,6 +36,13 @@ const App = () => {
     const newValue = event.target.value;
     setValue(newValue);
   };
+  const showDetails = (country) => {
+    setSelectedCountry(country);
+  };
+
+  const closeDetails = () => {
+    setSelectedCountry(null);
+  };
 
   return (
     <div>
@@ -46,32 +54,45 @@ const App = () => {
           {filteredCountries.length === 0 ? (
             <p>No matching countries found.</p>
           ) : (
-            <ul>
-              {filteredCountries.map((country, index) => (
-                <li key={index}>
-                  {country.name.common}
-                  {filteredCountries.length === 1 ? (
-                    <div>
-                      Additional Details:
-                      <ul>
-                        <li>Official Name: {country.name.official}</li>
-                        <li>Capital: {country.capital[0]}</li>
-                        <li>Population: {country.population}</li>
-                        {/* Add more details as needed */}
-                      </ul>
-                      <img
-                      src={country.flags.svg}
-                      alt={`${country.name.common} Flag`}
-                      style={{
-                        maxWidth: '200px', // Set the max width to your desired size
-                        maxHeight: '120px', // Set the max height to your desired size
-                      }}
-                    />
-                    </div>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+            <div>
+              {selectedCountry ? (
+                <div>
+                  <h2>{selectedCountry.name.common}</h2>
+                  <ul>
+                    <li>Capital: {selectedCountry.capital[0]}</li>
+                    <li>Population: {selectedCountry.population}</li>
+                  </ul>
+                  <h3>Languages</h3>
+                  <ul>
+                    {Object.entries(selectedCountry.languages).map(
+                      ([code, name]) => (
+                        <li key={code}>{name}</li>
+                      )
+                    )}
+                  </ul>
+                  <img
+                    src={selectedCountry.flags.svg}
+                    alt={`${selectedCountry.name.common} Flag`}
+                    style={{
+                      maxWidth: "260px", // Set the max width to your desired size
+                      maxHeight: "120px", // Set the max height to your desired size
+                    }}
+                  />
+                  <br/>
+                  <button onClick={closeDetails}>Close</button>
+                </div>
+                
+              ) : (
+                filteredCountries.map((country, index) => (
+                  <div key={index}>
+                    <h2>
+                      {country.name.common}
+                      <button onClick={() => showDetails(country)}>Show</button>
+                    </h2>
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </div>
       ) : (
@@ -79,5 +100,6 @@ const App = () => {
       )}
     </div>
   );
-}
+};
+
 export default App;
