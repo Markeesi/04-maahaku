@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import weatherService from "./services/weather-api";
 import axios from "axios";
 
 const App = () => {
@@ -6,6 +7,8 @@ const App = () => {
   const [countries, setCountries] = useState([]);
   const [filteredCountries, setFilteredCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const [weatherData, setWeatherData] = useState(null);
+  const showButtonRef = useRef(null);
 
   useEffect(() => {
     // Fetch country data when the component mounts
@@ -27,10 +30,20 @@ const App = () => {
         country.name.common.toLowerCase().includes(lowercaseValue)
       );
       setFilteredCountries(filtered);
+
+      if (filtered.length === 1) {
+        showDetails(filtered[0]);
+      }
     } else {
       setFilteredCountries([]);
     }
   }, [value, countries]);
+
+  useEffect(() => {
+    setSelectedCountry(null);
+    
+  }, [value]);
+
 
   const handleChange = (event) => {
     const newValue = event.target.value;
@@ -38,10 +51,29 @@ const App = () => {
   };
   const showDetails = (country) => {
     setSelectedCountry(country);
+    if (filteredCountries.length > 1 && showButtonRef.current) {
+      showButtonRef.current.click();
+    }
+    // Fetch weather data for the selected country's capital
+    weatherService
+      .getWeatherByCity(country.capital[0], country.cca)
+      .then((data) => {
+        setWeatherData(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching weather data: " + error);
+      });
+      
+  };
+
+  const kelvinToCelsius = (kelvin) => {
+    return (kelvin - 273.15).toFixed(2); // Keep two decimal places
   };
 
   const closeDetails = () => {
     setSelectedCountry(null);
+    setWeatherData(null);
+    showButtonRef.current = null;
   };
 
   return (
@@ -49,7 +81,7 @@ const App = () => {
       <div>
         Country: <input value={value} onChange={handleChange} />
       </div>
-      {filteredCountries.length < 5 ? (
+      {filteredCountries.length < 10 ? (
         <div>
           {filteredCountries.length === 0 ? (
             <p>No matching countries found.</p>
@@ -78,16 +110,41 @@ const App = () => {
                       maxHeight: "120px", // Set the max height to your desired size
                     }}
                   />
-                  <br/>
+                  <br />
                   <button onClick={closeDetails}>Close</button>
+                  {weatherData && (
+                    <div>
+                      <h3>Weather in {selectedCountry.capital[0]}</h3>
+                      <ul>
+                        <li>Main: {weatherData.weather[0].main}</li>
+                        <li>
+                          Description: {weatherData.weather[0].description}
+                        </li>
+                        <li>Temperature: {kelvinToCelsius(weatherData.main.temp)} Celsius</li>
+                        <li>
+                          <img
+                            src={`https://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`}
+                            alt="Weather Icon"
+                            style={{ maxWidth: "100px" }}
+                          />
+                        </li>
+                        <li>Wind Speed: {weatherData.wind.speed} m/s</li>
+                        {/* Add more weather data here */}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-                
               ) : (
                 filteredCountries.map((country, index) => (
                   <div key={index}>
                     <h2>
                       {country.name.common}
-                      <button onClick={() => showDetails(country)}>Show</button>
+                      <button
+                        ref={showButtonRef}
+                        onClick={() => showDetails(country)}
+                      >
+                        Show
+                      </button>
                     </h2>
                   </div>
                 ))
